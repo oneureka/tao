@@ -1,6 +1,7 @@
 package token
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -9,17 +10,28 @@ type Token struct {
 	Type   TokenType
 	Lexeme string
 	Value  any
-	Span   Span
+	Range
 }
 
-func (tok Token) literal() any {
+type Range struct {
+	Start Position
+	End   Position
+}
+
+type Position struct {
+	Offset int
+	Line   int
+	Col    int
+}
+
+func (tok Token) Literal() any {
 	switch tok.Type {
 	case Int:
-		value, _ := strconv.Atoi(tok.Lexeme)
-		return value
+		num, _ := strconv.Atoi(tok.Lexeme)
+		return num
 	case Float:
-		value, _ := strconv.ParseFloat(tok.Lexeme, 64)
-		return value
+		num, _ := strconv.ParseFloat(tok.Lexeme, 64)
+		return num
 	case String:
 		return tok.Lexeme[1 : len(tok.Lexeme)-2]
 	case Bool:
@@ -29,8 +41,6 @@ func (tok Token) literal() any {
 	}
 }
 
-func New(_type TokenType, lexeme string, span Span) Token {
-	token := Token{_type, lexeme, nil, span}
-	token.Value = token.literal()
-	return token
+func (tok Token) String() string {
+	return fmt.Sprintf("Token(%v, %s)", tok.Type, tok.Lexeme)
 }
