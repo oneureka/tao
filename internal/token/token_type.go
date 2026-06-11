@@ -122,3 +122,23 @@ var tokens = [...]string{
 	Arrow:      "Arrow",
 	EOF:        "EOF",
 }
+
+var Keywords = map[string]TokenType{
+	"if":      If,
+	"else":    Else,
+	"loop":    Loop,
+	"leave":   Leave,
+	"switch":  Switch,
+	"package": Package,
+	"import":  Import,
+	"const":   Const,
+	"data":    Data,
+	"fun":     Fun,
+	"let":     Let,
+	"mut":     Mut,
+	"try":     Try,
+	"return":  Return,
+	"and":     And,
+	"or":      Or,
+	"not":     Not,
+}
