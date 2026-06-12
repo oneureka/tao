@@ -33,10 +33,14 @@ func (c *Cursor) PeekNext() rune {
 
 func (c *Cursor) Advance() rune {
 	r, size := utf8.DecodeRuneInString(c.input[c.current:])
-	c.current += size
-	c.Offset += size
-	c.Col += size
+	c.Forward(size)
 	return r
+}
+
+func (c *Cursor) Forward(n int) {
+	c.current += n
+	c.Offset += n
+	c.Col += n
 }
 
 func (c *Cursor) Lexeme() string {

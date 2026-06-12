@@ -10,11 +10,11 @@ func isNone(str string) bool {
 	return str == "None"
 }
 
-func isWhitespace(ch rune) bool {
-	return ch == ' ' ||
-		ch == '\n' ||
-		ch == '\t' ||
-		ch == '\r'
+func isWhitespace(c rune) bool {
+	return c == ' ' ||
+		c == '\n' ||
+		c == '\t' ||
+		c == '\r'
 }
 
 func isAlphaNumeric(c rune) bool {

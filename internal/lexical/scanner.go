@@ -6,48 +6,63 @@ import (
 	"github.com/oneureka/tao/internal/token"
 )
 
-type Cursor struct {
-	input   string
-	start   int
-	current int
-	token.Position
+type Scanner struct {
+	source   string
+	cursor   *Cursor
+	tokens   []token.Token
+	start    int
+	startPos token.Position
 }
 
-func (c *Cursor) Peek() rune {
-	if c.EOF() {
-		return eof
+func (s *Scanner) numberToken(c rune) bool {
+	if isDigit(c) {
+		tt := token.Int
+
+		for isDigit(s.cursor.Peek()) {
+			s.cursor.Advance()
+		}
+
+		if s.cursor.Peek() == '.' && isDigit(s.cursor.PeekNext()) {
+			tt = token.Float
+			s.cursor.Advance()
+
+			for isDigit(s.cursor.Peek()) {
+				s.cursor.Advance()
+			}
+		}
+
+		lexeme := s.cursor.Lexeme()
+		s.addToken(tt, lexeme)
+
+		return true
 	}
 
-	r, _ := utf8.DecodeRuneInString(c.input[c.current:])
-	return r
+	return false
 }
 
-func (c *Cursor) PeekNext() rune {
-	if c.current+1 >= len(c.input) {
-		return eof
+func (s *Scanner) addToken(tt token.TokenType, lexeme string) token.Token {
+	tok := token.Token{
+		Type:   tt,
+		Lexeme: lexeme,
+		Range: token.Range{
+			Start: s.startPos,
+			End:   s.cursor.Position,
+		},
 	}
 
-	r, _ := utf8.DecodeRuneInString(c.input[c.current+1:])
-	return r
+	s.tokens = append(s.tokens, tok)
+	return tok
 }
 
-func (c *Cursor) Advance() rune {
-	r, size := utf8.DecodeRuneInString(c.input[c.current:])
-	c.current += size
-	c.Offset += size
-	c.Col += size
-	return r
-}
+func (s *Scanner) match(c rune) bool {
+	if s.cursor.EOF() {
+		return false
+	}
 
-func (c *Cursor) Lexeme() string {
-	return c.input[c.start:c.current]
-}
+	if s.cursor.Peek() == c {
+		s.cursor.Forward(utf8.RuneLen(c))
+		return true
+	}
 
-func (c *Cursor) Start() int {
-	c.start = c.current
-	return c.start
-}
-
-func (c *Cursor) EOF() bool {
-	return c.current >= len(c.input)
+	return false
 }
