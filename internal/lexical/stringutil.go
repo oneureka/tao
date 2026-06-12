@@ -1,5 +1,7 @@
 package lexical
 
+const eof = rune(-1)
+
 func isBool(str string) bool {
 	return str == "True" || str == "False"
 }
