@@ -12,6 +12,46 @@ type Scanner struct {
 	tokens   []token.Token
 	start    int
 	startPos token.Position
+	*ErrorSink
+}
+
+func (s *Scanner) stringToken() bool {
+	for {
+		if s.cursor.Peek() == '"' {
+			break
+		}
+
+		if s.cursor.EOF() {
+			break
+		}
+
+		if s.cursor.Peek() == '\n' {
+			s.cursor.Advance()
+			s.cursor.Line += 1
+			s.cursor.Col = 1
+			break
+		}
+
+		s.cursor.Advance()
+	}
+
+	if s.cursor.EOF() {
+		s.addError(UnterminatedString, s.startPos)
+		s.addToken(token.Illegal, "")
+		return true
+	}
+
+	if s.cursor.Col == 1 {
+		s.addError(UnterminatedString, s.startPos)
+		s.addToken(token.Illegal, "")
+		return true
+	}
+
+	s.cursor.Advance()
+	lexeme := s.cursor.Lexeme()
+
+	s.addToken(token.String, lexeme)
+	return true
 }
 
 func (s *Scanner) numberToken(c rune) bool {
