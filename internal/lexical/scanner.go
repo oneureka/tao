@@ -89,7 +89,66 @@ func (s *Scanner) scanToken() (token.Token, bool) {
 		s.addToken(token.Semi, ";")
 	case '.':
 		s.addToken(token.Dot, ".")
-
+	case '>':
+		if s.match('=') {
+			s.addToken(token.GreaterEq, ">=")
+		} else {
+			s.addToken(token.Greater, ">")
+		}
+	case '<':
+		if s.match('=') {
+			s.addToken(token.LessEq, "<=")
+		} else {
+			s.addToken(token.Less, "<")
+		}
+	case '=':
+		if s.match('=') {
+			s.addToken(token.EqualEq, "==")
+		} else {
+			if s.match('>') {
+				s.addToken(token.EqArrow, "=>")
+			} else {
+				s.addToken(token.Equal, "=")
+			}
+		}
+	case '!':
+		if s.match('=') {
+			s.addToken(token.BangEq, "!=")
+		} else {
+			s.addToken(token.Bang, "!")
+		}
+	case '-':
+		if s.match('>') {
+			s.addToken(token.Arrow, "->")
+		} else {
+			s.addToken(token.Minus, "-")
+		}
+	case '?':
+		s.addToken(token.Illegal, "")
+	case '&':
+		if s.match('&') {
+			if s.match('=') {
+				s.addToken(token.Illegal, "&&=")
+			} else {
+				s.addToken(token.And, "&&")
+			}
+		} else {
+			s.addToken(token.Illegal, "&")
+		}
+	case '|':
+		if s.match('|') {
+			if s.match('=') {
+				s.addToken(token.Illegal, "||=")
+			} else {
+				s.addToken(token.Or, "||")
+			}
+		} else {
+			if s.match('>') {
+				s.addToken(token.Illegal, "|>")
+			} else {
+				s.addToken(token.Illegal, "|")
+			}
+		}
 	case '"':
 		if !s.stringToken() {
 			s.addError(UnterminatedString, s.startPos)
