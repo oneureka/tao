@@ -15,6 +15,103 @@ type Scanner struct {
 	*ErrorSink
 }
 
+func (s *Scanner) scanToken() (token.Token, bool) {
+	c := s.cursor.Advance()
+
+	if s.skipWhitespace(c) {
+		return token.Token{}, false
+	}
+
+	if s.skipComment(c) {
+		return token.Token{}, false
+	}
+
+	switch c {
+	case '+':
+		s.addToken(token.Plus, "+")
+	case '*':
+		s.addToken(token.Star, "*")
+	case '/':
+		s.addToken(token.Slash, "/")
+	case '%':
+		s.addToken(token.Modulo, "%")
+	case '"':
+		if !s.stringToken() {
+			s.addError(UnterminatedString, s.startPos)
+			s.addToken(token.Illegal, "")
+		}
+	default:
+		if !s.numberToken(c) {
+			if !s.identifierToken(c) {
+				s.addError(UnexpectedChar, s.startPos)
+				s.addToken(token.Illegal, "")
+			}
+		}
+	}
+
+	return s.tokens[len(s.tokens)-1], true
+}
+
+func (s *Scanner) skipWhitespace(c rune) bool {
+	if c == '\n' {
+		s.cursor.Line += 1
+		s.cursor.Col = 1
+
+		return true
+	}
+
+	return isWhitespace(c)
+}
+
+func (s *Scanner) skipComment(c rune) bool {
+	if c == '/' && s.match('/') {
+		for {
+			if s.cursor.Peek() == '\n' {
+				break
+			}
+
+			if s.cursor.EOF() {
+				break
+			}
+
+			s.cursor.Advance()
+		}
+
+		return true
+	}
+
+	return false
+}
+
+func (s *Scanner) identifierToken(c rune) bool {
+	if isAlpha(c) {
+		for isAlphaNumeric(s.cursor.Peek()) {
+			s.cursor.Advance()
+		}
+
+		lexeme := s.cursor.Lexeme()
+
+		switch {
+		case isBool(lexeme):
+			s.addToken(token.Bool, lexeme)
+		case isNone(lexeme):
+			s.addToken(token.Identifier, lexeme)
+		default:
+			tt, ok := token.Keywords[lexeme]
+
+			if !ok {
+				tt = token.Identifier
+			}
+
+			s.addToken(tt, lexeme)
+		}
+
+		return true
+	}
+
+	return false
+}
+
 func (s *Scanner) stringToken() bool {
 	for {
 		if s.cursor.Peek() == '"' {
@@ -35,16 +132,12 @@ func (s *Scanner) stringToken() bool {
 		s.cursor.Advance()
 	}
 
-	if s.cursor.EOF() {
-		s.addError(UnterminatedString, s.startPos)
-		s.addToken(token.Illegal, "")
-		return true
+	if s.cursor.Col == 1 {
+		return false
 	}
 
-	if s.cursor.Col == 1 {
-		s.addError(UnterminatedString, s.startPos)
-		s.addToken(token.Illegal, "")
-		return true
+	if s.cursor.EOF() {
+		return false
 	}
 
 	s.cursor.Advance()
