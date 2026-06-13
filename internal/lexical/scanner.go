@@ -12,7 +12,41 @@ type Scanner struct {
 	tokens   []token.Token
 	start    int
 	startPos token.Position
+	nextTok  token.Token
+	single   bool
 	*ErrorSink
+}
+
+func (s *Scanner) NextToken() token.Token {
+	s.single = true
+	s.ScanTokens()
+
+	s.single = false
+	return s.nextTok
+}
+
+func (s *Scanner) ScanTokens() []token.Token {
+	for {
+		if s.cursor.EOF() {
+			break
+		}
+
+		s.start = s.cursor.Start()
+		s.startPos = s.cursor.Position
+
+		tok, ok := s.scanToken()
+
+		if ok {
+			s.nextTok = tok
+
+			if s.single {
+				return []token.Token{}
+			}
+		}
+	}
+
+	s.addToken(token.EOF, "")
+	return s.tokens
 }
 
 func (s *Scanner) scanToken() (token.Token, bool) {
@@ -35,6 +69,27 @@ func (s *Scanner) scanToken() (token.Token, bool) {
 		s.addToken(token.Slash, "/")
 	case '%':
 		s.addToken(token.Modulo, "%")
+	case '{':
+		s.addToken(token.LBrace, "{")
+	case '}':
+		s.addToken(token.RBrace, "}")
+	case '[':
+		s.addToken(token.LSquare, "[")
+	case ']':
+		s.addToken(token.RSquare, "]")
+	case '(':
+		s.addToken(token.LParen, "(")
+	case ')':
+		s.addToken(token.RParen, ")")
+	case ',':
+		s.addToken(token.Comma, ",")
+	case ':':
+		s.addToken(token.Colon, ":")
+	case ';':
+		s.addToken(token.Semi, ";")
+	case '.':
+		s.addToken(token.Dot, ".")
+
 	case '"':
 		if !s.stringToken() {
 			s.addError(UnterminatedString, s.startPos)
