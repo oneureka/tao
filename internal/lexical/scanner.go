@@ -28,6 +28,10 @@ func (s *Scanner) NextToken() token.Token {
 func (s *Scanner) ScanTokens() []token.Token {
 	for {
 		if s.cursor.EOF() {
+			if s.nextTok.Type != token.EOF {
+				s.nextTok = s.addToken(token.EOF, "")
+			}
+
 			break
 		}
 
@@ -45,7 +49,6 @@ func (s *Scanner) ScanTokens() []token.Token {
 		}
 	}
 
-	s.addToken(token.EOF, "")
 	return s.tokens
 }
 
