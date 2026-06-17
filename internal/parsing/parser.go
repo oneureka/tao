@@ -19,6 +19,33 @@ func (p *Parser) NextToken() token.Token {
 	return tok
 }
 
+func (p *Parser) parseProgram() ast.Expr {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(ParseError); ok {
+				p.synchronize()
+			}
+		}
+	}()
+
+	return p.parseExpression(PrecLowest)
+}
+
+func (p *Parser) parseVarDeclaration() ast.Declaration {
+	mut := p.match(token.Mut)
+	tok := p.consume(token.Identifier, "")
+
+	var initializer ast.Expr
+
+	if p.match(token.Equal) {
+		initializer = p.parseExpression(PrecLowest)
+
+		return ast.VarDeclaration{Name: tok, Mutable: mut, Initializer: initializer}
+	}
+
+	panic(ParseError{})
+}
+
 func (p *Parser) parseExpression(prec int) ast.Expr {
 	rule := RuleOf(p.peek().Type)
 
@@ -97,6 +124,34 @@ func (p *Parser) parseLiteral() ast.Expr {
 	p.advance()
 
 	return expr
+}
+
+func (p *Parser) synchronize() {
+	p.advance()
+
+	for {
+		if p.eof() {
+			break
+		}
+
+		if p.previous().Type == token.Semi {
+			return
+		}
+
+		switch p.peek().Type {
+		case
+			token.If,
+			token.Loop,
+			token.Switch,
+			token.Data,
+			token.Fun,
+			token.Let,
+			token.Return:
+			return
+		default:
+			p.advance()
+		}
+	}
 }
 
 func (p *Parser) expect(tt token.TokenType) token.Token {
