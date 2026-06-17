@@ -20,7 +20,7 @@ func (p *Parser) NextToken() token.Token {
 }
 
 func (p *Parser) parseExpression(prec int) ast.Expr {
-	rule := RuleOf(p.peek())
+	rule := RuleOf(p.peek().Type)
 
 	if rule.prefix == "" {
 		panic(ParseError{})
@@ -28,8 +28,8 @@ func (p *Parser) parseExpression(prec int) ast.Expr {
 
 	left := rule.ParsePrefix(p)
 
-	for prec < PrecedenceOf(p.peek()) {
-		rule := RuleOf(p.peek())
+	for prec < PrecedenceOf(p.peek().Type) {
+		rule := RuleOf(p.peek().Type)
 
 		if rule.infix == "" {
 			break
@@ -49,6 +49,23 @@ func (p *Parser) parseGrouping() ast.Expr {
 	return expr
 }
 
+func (p *Parser) parseAssign(left ast.Expr) ast.Expr {
+	operator := p.peek()
+	p.advance()
+
+	right := p.parseExpression(PrecAssign - 1)
+	var expr ast.Expr
+
+	switch lhs := left.(type) {
+	case ast.Identifier:
+		expr = ast.AssignExpr{Left: lhs, Operator: operator, Right: right}
+	default:
+		panic(ParseError{token: operator})
+	}
+
+	return expr
+}
+
 func (p *Parser) parseIdentifier() ast.Expr {
 	expr := ast.Identifier{Name: p.peek()}
 	p.advance()
@@ -60,7 +77,7 @@ func (p *Parser) parseBinary(left ast.Expr) ast.Expr {
 	operator := p.peek()
 	p.advance()
 
-	right := p.parseExpression(PrecedenceOf(p.previous()))
+	right := p.parseExpression(PrecedenceOf(p.previous().Type))
 	return ast.BinaryExpr{Left: left, Operator: operator, Right: right}
 }
 

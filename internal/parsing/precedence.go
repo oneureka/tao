@@ -33,9 +33,9 @@ var precedences = [...]int{
 	token.Or:        PrecOr,
 }
 
-func PrecedenceOf(tok token.Token) int {
-	if 0 <= tok.Type && int(tok.Type) < len(precedences) {
-		return precedences[tok.Type]
+func PrecedenceOf(tt token.TokenType) int {
+	if 0 <= tt && int(tt) < len(precedences) {
+		return precedences[tt]
 	}
 
 	return PrecLowest

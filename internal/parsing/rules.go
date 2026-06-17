@@ -18,8 +18,11 @@ func (r *Rule) ParsePrefix(p *Parser) ast.Expr {
 		expr = p.parseUnary()
 	case "parse_array":
 	case "parse_grouping":
+		expr = p.parseGrouping()
 	case "parse_identifier":
+		expr = p.parseIdentifier()
 	case "parse_literal":
+		expr = p.parseLiteral()
 	case "parse_fun":
 
 	}
@@ -37,6 +40,7 @@ func (r *Rule) ParseInfix(p *Parser, left ast.Expr) ast.Expr {
 		"parse_equality":
 		expr = p.parseBinary(left)
 	case "parse_assign":
+		expr = p.parseAssign(left)
 	case "parse_index":
 	case "parse_call":
 
@@ -74,9 +78,9 @@ var rules = [...]Rule{
 	token.Fun:        {prefix: "parse_fun"},
 }
 
-func RuleOf(tok token.Token) Rule {
-	if 0 <= tok.Type && int(tok.Type) < len(rules) {
-		return rules[tok.Type]
+func RuleOf(tt token.TokenType) Rule {
+	if 0 <= tt && int(tt) < len(rules) {
+		return rules[tt]
 	}
 
 	return Rule{}

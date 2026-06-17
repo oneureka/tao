@@ -42,5 +42,5 @@ func (tok Token) Literal() any {
 }
 
 func (tok Token) String() string {
-	return fmt.Sprintf("Token(%v, %s)", tok.Type, tok.Lexeme)
+	return fmt.Sprintf("Token(%v, \"%s\")", tok.Type, tok.Lexeme)
 }

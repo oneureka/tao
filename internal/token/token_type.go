@@ -63,7 +63,7 @@ const (
 )
 
 func (tt TokenType) String() string {
-	if 0 <= tt && tt < TokenType(len(tokens)) {
+	if 0 <= tt && int(tt) < len(tokens) {
 		return tokens[tt]
 	}
 
