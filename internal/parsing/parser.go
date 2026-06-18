@@ -31,6 +31,63 @@ func (p *Parser) parseProgram() ast.Expr {
 	return p.parseExpression(PrecLowest)
 }
 
+func (p *Parser) parseStatement() ast.Statement {
+	switch {
+	case p.match(token.If):
+		return p.parseIfStatement()
+	case p.match(token.Return):
+		return p.parseReturnStatement()
+	case p.match(token.Let):
+		return p.parseVarDeclaration()
+	default:
+		return p.parseExpression(PrecLowest)
+	}
+}
+
+func (p *Parser) parseIfStatement() ast.Statement {
+	cond := p.parseExpression(PrecLowest)
+	then := p.parseBlockStatement().(ast.BlockStatement)
+
+	var elseBranch ast.BlockStatement
+
+	if p.match(token.Else) {
+		elseBranch = p.parseBlockStatement().(ast.BlockStatement)
+	}
+
+	return ast.IfStatement{Cond: cond, Then: then, Else: elseBranch}
+}
+
+func (p *Parser) parseBlockStatement() ast.Statement {
+	statements := make([]ast.Statement, 0)
+
+	for {
+		if p.check(token.RBrace) {
+			break
+		}
+
+		if p.eof() {
+			break
+		}
+
+		statements = append(statements, p.parseStatement())
+	}
+
+	p.consume(token.RBrace, "")
+	return ast.BlockStatement{Statements: statements}
+}
+
+func (p *Parser) parseReturnStatement() ast.Statement {
+	var value ast.Expr
+	keyword := p.previous()
+
+	if !p.check(token.Semi) {
+		value = p.parseExpression(PrecLowest)
+	}
+
+	p.consume(token.Semi, "")
+	return ast.ReturnStatement{Keyword: keyword, Value: value}
+}
+
 func (p *Parser) parseVarDeclaration() ast.Declaration {
 	mut := p.match(token.Mut)
 	tok := p.consume(token.Identifier, "")

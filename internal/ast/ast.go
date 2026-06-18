@@ -22,6 +22,13 @@ type Declaration interface {
 	Node
 }
 
+type IfStatement struct {
+	Cond Expr
+	Then BlockStatement
+	Else BlockStatement
+	Statement
+}
+
 type ExprStatement struct {
 	Expression Expr
 	Statement
