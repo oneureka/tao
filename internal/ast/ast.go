@@ -29,6 +29,16 @@ type IfStatement struct {
 	Statement
 }
 
+type LoopStatement struct {
+	Body BlockStatement
+	Statement
+}
+
+type LeaveStatement struct {
+	Keyword token.Token
+	Statement
+}
+
 type ExprStatement struct {
 	Expression Expr
 	Statement

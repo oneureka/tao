@@ -35,13 +35,39 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch {
 	case p.match(token.If):
 		return p.parseIfStatement()
+	case p.match(token.Loop):
+		return p.parseLoopStatement()
+	case p.match(token.Leave):
+		return p.parseExprStatement()
+	case p.match(token.Fun):
+		return p.parseExprStatement()
+	case p.match(token.Let):
+		return p.parseVarDeclaration()
 	case p.match(token.Return):
 		return p.parseReturnStatement()
+	default:
+		return p.parseExprStatement()
+	}
+}
+
+func (p *Parser) parseDeclaration() ast.Declaration {
+	switch {
+	case p.match(token.Data):
+		return nil
+	case p.match(token.Fun):
+		return nil
 	case p.match(token.Let):
 		return p.parseVarDeclaration()
 	default:
-		return p.parseExpression(PrecLowest)
+		return p.parseStatement()
 	}
+}
+
+func (p *Parser) parseExprStatement() ast.Statement {
+	expr := p.parseExpression(PrecLowest)
+	p.consume(token.Semi, "")
+
+	return ast.ExprStatement{Expression: expr}
 }
 
 func (p *Parser) parseIfStatement() ast.Statement {
@@ -55,6 +81,11 @@ func (p *Parser) parseIfStatement() ast.Statement {
 	}
 
 	return ast.IfStatement{Cond: cond, Then: then, Else: elseBranch}
+}
+
+func (p *Parser) parseLoopStatement() ast.Statement {
+	body := p.parseBlockStatement().(ast.BlockStatement)
+	return ast.LoopStatement{Body: body}
 }
 
 func (p *Parser) parseBlockStatement() ast.Statement {
