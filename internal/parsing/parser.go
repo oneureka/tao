@@ -39,10 +39,6 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseLoopStatement()
 	case p.match(token.Leave):
 		return p.parseExprStatement()
-	case p.match(token.Fun):
-		return p.parseExprStatement()
-	case p.match(token.Let):
-		return p.parseVarDeclaration()
 	case p.match(token.Return):
 		return p.parseReturnStatement()
 	default:
@@ -55,19 +51,12 @@ func (p *Parser) parseDeclaration() ast.Declaration {
 	case p.match(token.Data):
 		return nil
 	case p.match(token.Fun):
-		return nil
+		return p.parseFunctionDecl()
 	case p.match(token.Let):
 		return p.parseVarDeclaration()
 	default:
 		return p.parseStatement()
 	}
-}
-
-func (p *Parser) parseExprStatement() ast.Statement {
-	expr := p.parseExpression(PrecLowest)
-	p.consume(token.Semi, "")
-
-	return ast.ExprStatement{Expression: expr}
 }
 
 func (p *Parser) parseIfStatement() ast.Statement {
@@ -119,6 +108,38 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 	return ast.ReturnStatement{Keyword: keyword, Value: value}
 }
 
+func (p *Parser) parseFunctionDecl() ast.Declaration {
+	name := p.consume(token.Identifier, "")
+	p.consume(token.LParen, "")
+
+	params := make([]token.Token, 0)
+
+	if !p.check(token.RParen) {
+		for {
+			if len(params) <= 128 {
+				params = append(params, p.consume(token.Identifier, ""))
+
+				if !p.match(token.Comma) {
+					break
+				}
+			}
+
+			panic(ParseError{token: p.peek()})
+		}
+	}
+
+	p.consume(token.RParen, "")
+	p.consume(token.LBrace, "")
+
+	body := p.parseBlockStatement().(ast.BlockStatement)
+
+	return ast.FunctionDecl{
+		Name:   ast.Identifier{Name: name},
+		Params: params,
+		Body:   body,
+	}
+}
+
 func (p *Parser) parseVarDeclaration() ast.Declaration {
 	mut := p.match(token.Mut)
 	tok := p.consume(token.Identifier, "")
@@ -132,6 +153,13 @@ func (p *Parser) parseVarDeclaration() ast.Declaration {
 	}
 
 	panic(ParseError{})
+}
+
+func (p *Parser) parseExprStatement() ast.Statement {
+	expr := p.parseExpression(PrecLowest)
+	p.consume(token.Semi, "")
+
+	return ast.ExprStatement{Expression: expr}
 }
 
 func (p *Parser) parseExpression(prec int) ast.Expr {
