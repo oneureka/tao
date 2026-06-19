@@ -59,6 +59,27 @@ func (p *Parser) parseDeclaration() ast.Declaration {
 	}
 }
 
+func (p *Parser) parseDataDeclaration() ast.Declaration {
+	name := p.consume(token.Identifier, "")
+	p.consume(token.LBrace, "")
+
+	fields := make([]token.Token, 0)
+
+	for {
+		if p.check(token.RBrace) {
+			break
+		}
+
+		field := p.parseIdentifier().(ast.Identifier).Name
+		fields = append(fields, field)
+
+		p.consume(token.Comma, "")
+	}
+
+	p.consume(token.RBrace, "")
+	return ast.DataDeclaration{Name: name, Fields: fields}
+}
+
 func (p *Parser) parseIfStatement() ast.Statement {
 	cond := p.parseExpression(PrecLowest)
 	then := p.parseBlockStatement().(ast.BlockStatement)
